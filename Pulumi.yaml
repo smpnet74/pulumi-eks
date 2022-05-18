@@ -1,0 +1,3 @@
+name: pulumi-eks
+runtime: nodejs
+description: An automation to start an EKS cluster
