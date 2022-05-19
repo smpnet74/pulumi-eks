@@ -1,9 +1,30 @@
-import * as pulumi from "@pulumi/pulumi";
-import * as aws from "@pulumi/aws";
-import * as awsx from "@pulumi/awsx";
+import * as awsx from "@pulumi/awsx"
+import * as pulumi from "@pulumi/pulumi"
+import * as eks from "@pulumi/eks"
 
-// Create an AWS resource (S3 Bucket)
-const bucket = new aws.s3.Bucket("my-bucket");
+// Allocate a new VPC with the default settings:
+const vpc = new awsx.ec2.Vpc("ephemeralVPC", {
+    numberOfAvailabilityZones: 2,
+    
+    cidrBlock: "172.16.8.0/24",
+    tags: {
+        "Name": pulumi.getProject()
+    }
+})
 
-// Export the name of the bucket
-export const bucketName = bucket.id;
+const ephemeralEKS = new eks.Cluster("ephemeralEKS", {
+    vpcId: vpc.id,
+    publicSubnetIds: vpc.publicSubnetIds,
+    privateSubnetIds: vpc.privateSubnetIds,
+    nodeAssociatePublicIpAddress: false,
+    tags: {
+        "Name": pulumi.getProject()
+    }
+})
+
+
+// Export a few resulting fields to make them easy to use:
+export const ephemeralVPCID = vpc.id
+export const privateSubnetIds = vpc.privateSubnetIds
+export const publicSubnetIds = vpc.publicSubnetIds
+export const kubeconfig = ephemeralEKS.kubeconfig
